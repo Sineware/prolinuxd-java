@@ -35,6 +35,7 @@ public class Main {
         log.info("Attempting to connect to Sineware Cloud Services...");
 
         WebSocketClient client = new CloudClient(new URI("wss://update.sineware.ca/api/v1/gateway"));
+        //WebSocketClient client = new CloudClient(new URI("ws://localhost:3000/api/v1/gateway"));
         client.connect();
     }
 }
