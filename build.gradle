@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'ca.sineware'
+version '1.0-SNAPSHOT'
+
+application {
+    mainClass = "ca.sineware.prolinuxd.Main"
+}
+
+repositories {
+    mavenCentral()
+    google()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+
+    implementation 'org.slf4j:slf4j-simple:1.7.30'
+    implementation 'org.java-websocket:Java-WebSocket:1.5.2'
+    implementation 'com.google.code.gson:gson:2.8.8'
+
+    compileOnly 'org.projectlombok:lombok:1.18.22'
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.22'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    manifest { attributes 'Main-Class': 'ca.sineware.prolinuxd.Main'  }
+
+    duplicatesStrategy = DuplicatesStrategy.WARN
+
+    dependsOn configurations.runtimeClasspath
+
+    from {
+        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+    }
+}
