@@ -19,13 +19,24 @@ package ca.sineware.prolinuxd;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 
+import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import com.sun.management.OperatingSystemMXBean;
 
 @Slf4j
 public class Main {
     public static void main(String[] args) throws URISyntaxException {
         log.info("Starting prolinuxd on " + System.getProperty("os.name") + "...");
+
+        OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+
+        log.info(bean.getArch());
+        log.info(bean.getName());
+        log.info(bean.getVersion());
+        log.info(String.valueOf(bean.getTotalMemorySize()));
+        log.info(String.valueOf(bean.getSystemLoadAverage()));
 
         if(System.getenv("SINEWARE_CLOUD_TOKEN") == null || System.getenv("SINEWARE_CLOUD_TOKEN").isBlank()) {
             log.error("Env SINEWARE_CLOUD_TOKEN is not set.");
