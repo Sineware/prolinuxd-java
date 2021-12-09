@@ -18,6 +18,7 @@
 package ca.sineware.prolinuxd;
 import ca.sineware.prolinuxd.gui.installer.InstallerGUI;
 import lombok.extern.slf4j.Slf4j;
+import org.freedesktop.dbus.connections.impl.DBusConnection;
 import org.java_websocket.client.WebSocketClient;
 
 import java.lang.management.ManagementFactory;
@@ -39,6 +40,14 @@ public class Main {
         log.info(String.valueOf(bean.getSystemLoadAverage()));
 
         System.out.println("Attempting connection to D-Bus...");
+        try {
+            DBusConnection conn = DBusConnection.getConnection( DBusConnection.DBusBusType.SYSTEM );
+        } catch (Exception e) {
+            log.error("Could not connect to D-Bus!");
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
 
         if("true".equals(System.getenv("SINEWARE_STANDALONE")) || System.getenv("SINEWARE_CLOUD_TOKEN") == null) {
             log.info("Running in standalone mode...");
