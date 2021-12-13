@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn" name="prolinuxd" packages="ca.sineware">
+    <Appenders>
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d] - %C - %m%n"/>
+        </Console>
+        <SwingAppender name="SwingAppender" />
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="STDOUT"/>
+            <AppenderRef ref="SwingAppender" />
+        </Root>
+    </Loggers>
+</Configuration>

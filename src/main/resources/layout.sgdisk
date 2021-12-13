@@ -1,0 +1,11 @@
+label: gpt
+label-id: C702662D-8DDA-41EA-9844-6D1CBB6C0F28
+device: /dev/sda
+unit: sectors
+first-lba: 34
+last-lba: 33554398
+sector-size: 512
+
+/dev/sda1 : start=        2048, size=        2048, type=21686148-6449-6E6F-744E-656564454649, uuid=AB786C1B-7253-4CBF-8DA4-E8535D232CDB, name="BIOS Boot"
+/dev/sda2 : start=        4096, size=      524288, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, uuid=23B48610-E77A-4F91-91FD-61BE94AE3AB3, name="EFI Boot"
+/dev/sda3 : start=      528384, size=    33026015, type=E6D6D379-F507-44C2-A23C-238F2A3DF928, uuid=5D4E6148-3E2B-4CA3-BB6A-7F97D7A54070, name="Sineware ProLinux"

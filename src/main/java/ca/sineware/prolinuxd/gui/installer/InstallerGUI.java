@@ -1,17 +1,23 @@
 package ca.sineware.prolinuxd.gui.installer;
 
+import ca.sineware.prolinuxd.gui.SwingAppender;
+import ca.sineware.prolinuxd.installer.InstallerConfig;
+import ca.sineware.prolinuxd.installer.OSInstaller;
 import com.formdev.flatlaf.FlatLightLaf;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 
 @Slf4j
 public class InstallerGUI extends JFrame {
 
     InstallType installType = InstallType.ENTIRE_DISK;
 
-    public InstallerGUI() throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+
+    public InstallerGUI() throws Exception {
         FlatLightLaf.setup();
 
         JPanel contents = new JPanel();
@@ -70,15 +76,29 @@ public class InstallerGUI extends JFrame {
         c.gridy++;
         contents.add(new JSeparator(SwingConstants.HORIZONTAL), c);
 
-        c.gridy += 2;
+        c.gridy++;
         final JButton installButton = new JButton("Install");
         contents.add(installButton, c);
+
+        c.gridy++;
+        contents.add(new JSeparator(SwingConstants.HORIZONTAL), c);
+
+        c.gridy++;
+        contents.add(new JLabel("Logs"), c);
+        c.gridy++;
+        SwingAppender.logArea = new JTextArea(15,45);
+        SwingAppender.logScrollPane = new JScrollPane (SwingAppender.logArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        SwingAppender.logScrollPane.setPreferredSize(new Dimension(100, 200));
+        contents.add(SwingAppender.logScrollPane, c);
 
         // Only visible when custom scheme is selected.
         bootPartition.getPanel().setVisible(false);
         rootPartition.getPanel().setVisible(false);
 
         add(contents);
+
+        SwingUtilities.updateComponentTreeUI(this);
+        pack();
 
         // Action Listeners
         entireButton.addActionListener(e -> {
@@ -93,9 +113,18 @@ public class InstallerGUI extends JFrame {
         });
         installButton.addActionListener(e -> {
             log.info("Starting install...");
+            InstallerConfig conf = new InstallerConfig();
+            conf.targetDisk = targetDisk.getText();
+            conf.hostname = hostname.getText();
+            try {
+                OSInstaller.installOS(conf);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, ex.getMessage());
+            }
         });
 
-        setSize(800,600);
+        setSize(900,700);
         setVisible(true);//making the frame visible
     }
 }
@@ -110,7 +139,7 @@ class TextFieldWithLabel {
     private final JTextField text;
     public TextFieldWithLabel(String label) {
         panel = new JPanel();
-        panel.setLayout(new FlowLayout());
+        panel.setLayout(new FlowLayout(FlowLayout.RIGHT, 40, 10));
         final JLabel textLabel = new JLabel(label);
         text = new JTextField(16);
         panel.add(textLabel);
