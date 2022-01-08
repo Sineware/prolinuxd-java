@@ -38,13 +38,8 @@ public class SwingAppender extends AbstractAppender {
 
     @Override
     public void append(LogEvent event) {
-        //eventMap.put(Instant.now().toString(), event);
-        //System.out.println("AAAAAA LOG" + Instant.now().toString() + "  - -  " + event.getMessage().getFormattedMessage());
-        //InstallerGUI
-        //JScrollBar vertical = InstallerGUI.logScrollPane.getVerticalScrollBar();
-        //vertical.setValue( vertical.getMaximum() );
         if(logScrollPane != null) {
-            logArea.append("[" + new Date(event.getInstant().getEpochMillisecond()).toString() + "]" + event.getMessage().getFormattedMessage() + "\n");
+            logArea.append("[" + new Date(event.getInstant().getEpochMillisecond()).toString() + "] " + event.getMessage().getFormattedMessage() + "\n");
             JScrollBar vertical = logScrollPane.getVerticalScrollBar();
             vertical.setValue( vertical.getMaximum() );
         }
