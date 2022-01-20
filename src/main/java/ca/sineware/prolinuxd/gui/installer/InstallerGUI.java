@@ -117,7 +117,15 @@ public class InstallerGUI extends JFrame {
             conf.targetDisk = targetDisk.getText();
             conf.hostname = hostname.getText();
             try {
-                OSInstaller.installOS(conf);
+                new Thread(() -> {
+                    try {
+                        log.info("Starting OSInstaller.installOS in thread...");
+                        OSInstaller.installOS(conf);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(this, ex.getMessage());
+                    }
+                }).start();
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, ex.getMessage());

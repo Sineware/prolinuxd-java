@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ini4j.Ini;
 import org.java_websocket.client.WebSocketClient;
 
+import java.awt.*;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
