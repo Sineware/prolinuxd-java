@@ -11,6 +11,7 @@ import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 
+import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -48,8 +49,14 @@ public class OSInstaller {
             }
         }
         try {
-            ig = new InstallerGUI();
-            frameOpen = true;
+            EventQueue.invokeLater(() -> {
+                try {
+                    ig = new InstallerGUI();
+                    frameOpen = true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         } catch (Throwable e) {
             e.printStackTrace();
             log.info("Could not start installer GUI!");
@@ -61,13 +68,32 @@ public class OSInstaller {
         log.info("Executing install commands...");
         log.info("Formatting drive " + conf.targetDisk + " for " + conf.hostname);
 
+        // This is determined by the UUID in layout.sgdisk
+        // We use UUIDs instead of "sda3" because it could also be "nvme0n1p3"
+        // todo: We should probably dynamically create and use instead of hardcoding
+        String lvmPart = "/dev/disk/by-partuuid/5d4e6148-3e2b-4ca3-bb6a-7f97d7a54070";
+
         // Check for an existing ProLinuxVG and remove it
         // todo: use a better system to detect any volume group that a device used to be a part of
         final Path path = Paths.get("/dev/ProLinuxVG");
         if(Files.exists(path)) {
             log.info("Detected previous ProLinux installation (ProLinuxVG), removing it...");
+            singleStepCmd("lvchange -an /dev/ProLinuxVG/lvol_grub", false);
+            singleStepCmd("lvchange -an /dev/ProLinuxVG/lvol_config", false);
+            singleStepCmd("lvchange -an /dev/ProLinuxVG/lvol_root_a", false);
+            singleStepCmd("lvchange -an /dev/ProLinuxVG/lvol_root_b", false);
+            singleStepCmd("lvchange -an /dev/ProLinuxVG/lvol_data", false);
+
+            singleStepCmd("lvremove -y /dev/ProLinuxVG/lvol_grub", false);
+            singleStepCmd("lvremove -y /dev/ProLinuxVG/lvol_config", false);
+            singleStepCmd("lvremove -y /dev/ProLinuxVG/lvol_root_a", false);
+            singleStepCmd("lvremove -y /dev/ProLinuxVG/lvol_root_b", false);
+            singleStepCmd("lvremove -y /dev/ProLinuxVG/lvol_data", false);
+
             singleStepCmd("vgchange -an ProLinuxVG");
             singleStepCmd("vgremove -y ProLinuxVG");
+
+            singleStepCmd("pvremove " + lvmPart);
         }
 
         log.info("Formatting with default GPT layout...");
@@ -87,15 +113,10 @@ public class OSInstaller {
         // - Volume Groups (groups of physical volumes treated as one space)
         // - Logical Volumes (multiple "partitions" within a volume group, these are formatted with filesystems)
 
-        // This is determined by the UUID in layout.sgdisk
-        // We use UUIDs instead of "sda3" because it could also be "nvme0n1p3"
-        // todo: We should probably dynamically create and use instead of hardcoding
-        String lvmPart = "/dev/disk/by-partuuid/5d4e6148-3e2b-4ca3-bb6a-7f97d7a54070";
-
         singleStepCmd("lvmdiskscan");
 
         log.info("Creating LVM physical volume on " + lvmPart + "...");
-        singleStepCmd("pvcreate " + lvmPart);
+        singleStepCmd("pvcreate -ffy " + lvmPart);
 
         log.info("Physical volume summary: ");
         singleStepCmd("pvdisplay");
@@ -111,14 +132,30 @@ public class OSInstaller {
         singleStepCmd("vgdisplay");
 
         log.info("Creating LVM logical volumes");
-        singleStepCmd("lvcreate -L 4G ProLinuxVG -n lvol_root_a");
-        singleStepCmd("lvcreate -L 4G ProLinuxVG -n lvol_root_b");
-        singleStepCmd("lvcreate -l 100%FREE ProLinuxVG -n lvol_data");
+        singleStepCmd("lvcreate -y -L 16M ProLinuxVG -n lvol_grub");
+        singleStepCmd("lvcreate -y -L 128M ProLinuxVG -n lvol_config");
+        singleStepCmd("lvcreate -y -L 4G ProLinuxVG -n lvol_root_a");
+        singleStepCmd("lvcreate -y -L 4G ProLinuxVG -n lvol_root_b");
+        singleStepCmd("lvcreate -y -l 100%FREE ProLinuxVG -n lvol_data");
 
         log.info("Logical volumes summary: ");
         singleStepCmd("lvdisplay");
 
+        log.info("Formatting grub, config, and data logical volumes:");
+        singleStepCmd("mkfs.ext4 -F /dev/ProLinuxVG/lvol_grub");
+        singleStepCmd("mkfs.ext4 -F /dev/ProLinuxVG/lvol_config");
+        singleStepCmd("mkfs.ext4 -F /dev/ProLinuxVG/lvol_data");
 
+        log.info("Extracting RootFS to logical volume Root A");
+        singleStepCmd("dd if=/system/prolinux-server.squashfs.img of=/dev/ProLinuxVG/lvol_root_a bs=4096 status=progress");
+
+        log.info("Mounting directories...");
+        singleStepCmd("mount /dev/ProLinuxVG/lvol_root_a /mnt");
+        singleStepCmd("mount /dev/ProLinuxVG/lvol_grub /mnt/boot/");
+
+        log.info("Installing GRUB...");
+        singleStepCmd("grub-install --boot-directory /mnt/boot /dev/sda");
+        singleStepCmd("cp /system/grub-hdd.cfg /mnt/boot/grub/grub.cfg");
 
         log.info("Installation successful!");
         log.info("Please reboot and remove the installation media.");
