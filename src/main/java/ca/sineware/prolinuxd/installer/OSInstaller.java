@@ -94,6 +94,8 @@ public class OSInstaller {
             singleStepCmd("vgremove -y ProLinuxVG");
 
             singleStepCmd("pvremove " + lvmPart);
+
+            singleStepCmd("ls -l /dev/mapper");
         }
 
         log.info("Formatting with default GPT layout...");
@@ -156,6 +158,9 @@ public class OSInstaller {
         log.info("Installing GRUB...");
         singleStepCmd("grub-install --boot-directory /mnt/boot /dev/sda");
         singleStepCmd("cp /system/grub-hdd.cfg /mnt/boot/grub/grub.cfg");
+
+        log.info("Writing system configuration file...");
+        //todo system configuration file
 
         log.info("Installation successful!");
         log.info("Please reboot and remove the installation media.");

@@ -4,6 +4,7 @@ import ca.sineware.prolinuxd.ws.Action;
 import ca.sineware.prolinuxd.ws.payloads.ErrorPayload;
 import ca.sineware.prolinuxd.ws.payloads.hello.HelloAckPayload;
 import ca.sineware.prolinuxd.ws.payloads.hello.HelloPayload;
+import ca.sineware.prolinuxd.ws.payloads.hello.HelloPayloadInfo;
 import ca.sineware.prolinuxd.ws.payloads.unsafe_exec_cmd.StreamTerminalPayload;
 import ca.sineware.prolinuxd.ws.payloads.unsafe_exec_cmd.UnsafeExecCmdPayload;
 import com.google.gson.Gson;
@@ -18,7 +19,9 @@ import org.java_websocket.handshake.ServerHandshake;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 
 @Slf4j
 public class CloudClient extends WebSocketClient {
@@ -40,9 +43,13 @@ public class CloudClient extends WebSocketClient {
 
         // Authenticate
         Action<HelloPayload> helloAction = new Action<>();
-        HelloPayload helloPayload = new HelloPayload();
-        helloPayload.type = "device";
-        helloPayload.token = System.getenv("SINEWARE_CLOUD_TOKEN");
+        HelloPayload helloPayload = null;
+        try {
+            helloPayload = new HelloPayload("device", Main.cloudToken, new HelloPayloadInfo(InetAddress.getLocalHost().getHostName()));
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            System.exit(-6);
+        }
 
         helloAction.action = "hello";
         helloAction.payload = helloPayload;

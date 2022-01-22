@@ -5,9 +5,6 @@ import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor
-public class HelloPayload {
-    public String type;
-    public String token;
-    public HelloPayloadInfo info = new HelloPayloadInfo();
+public class HelloPayloadInfo {
+    String deviceName = "prolinuxd-java";
 }
-

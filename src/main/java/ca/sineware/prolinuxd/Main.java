@@ -27,12 +27,18 @@ import java.awt.*;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.sun.management.OperatingSystemMXBean;
 
 @Slf4j
 public class Main {
-    public static Ini baseSysConf;
+    public static Ini baseSysConf; // sineware.ini (read-only)
+    public static Ini sysConf; // prolinux.ini (system specific )
+    public static String cloudToken;
+
     public static void main(String[] args) throws Exception {
         log.info("Starting prolinuxd on " + System.getProperty("os.name") + "...");
 
@@ -63,25 +69,33 @@ public class Main {
             System.exit(-2);
         }
         String systemStyle = baseSysConf.get("prolinux", "style");
-        log.info("System style: " + systemStyle); // live or sys
+        log.info("System style: " + systemStyle); // live or system
 
         if("live".equals(systemStyle)) {
             OSInstaller osi = new OSInstaller();
-        } else {
-            if(System.getenv("SINEWARE_CLOUD_TOKEN") == null) {
-                log.info("Running in standalone mode...");
-            } else {
-                if(System.getenv("SINEWARE_CLOUD_TOKEN") == null || System.getenv("SINEWARE_CLOUD_TOKEN").isBlank()) {
-                    log.error("Env SINEWARE_CLOUD_TOKEN is not set.");
-                    System.exit(-3);
-                }
+        } else if("system".equals(systemStyle)) {
+            //String cloudToken = null;
+            final Path path = Paths.get("/config/prolinux.ini");
+            if(System.getenv("SINEWARE_CLOUD_TOKEN") != null && !System.getenv("SINEWARE_CLOUD_TOKEN").isBlank()) {
+                cloudToken = System.getenv("SINEWARE_CLOUD_TOKEN");
+            } else if(Files.exists(path)) { // check for the prolinux.ini configuration file.
+                log.info("Reading system ProLinux configuration...");
+                sysConf = new Ini(new File("/config/prolinux.ini"));
+                cloudToken = sysConf.get("prolinux",  "cloud_token");
+            }
 
+            if(cloudToken != null) {
                 log.info("Attempting to connect to Sineware Cloud Services...");
 
                 WebSocketClient client = new CloudClient(new URI("wss://update.sineware.ca/api/v1/gateway"));
                 //WebSocketClient client = new CloudClient(new URI("ws://localhost:3000/api/v1/gateway"));
                 client.connect();
+            } else {
+                log.info("Booting in standalone mode...");
             }
+        } else {
+            log.error("Unknown or not set System style.");
+            System.exit(-4);
         }
     }
 }
